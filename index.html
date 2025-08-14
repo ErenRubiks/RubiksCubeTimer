@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rubik's Cube Hybrid App</title>
+<style>
+/* Genel Ayarlar */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Arial', sans-serif;
+    background: #121229;
+    color: #fff;
+}
+
+/* Split Container */
+.split {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Üst Kısım (Scramble) */
+.top {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px 10px;
+    background: linear-gradient(135deg, #2b3a67, #4059a9);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Küp Seçici */
+.cube-selector-area {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.cube-select {
+    background-color: #3d4e96;
+    border: none;
+    color: #ffffff;
+    height: 40px;
+    width: 80px;
+    border-radius: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Scramble Alanı */
+.scramble-area {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #3d4e96, #5c6bc0);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+}
+
+.scramble-area .title {
+    font-family: 'DS-Digital', sans-serif;
+    font-size: 22px;
+    color: #fff;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* Butonlar */
+.create-button, .copy-button {
+    background: linear-gradient(135deg, #1a237e, #3949ab);
+    color: #ffffff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 5px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.create-button:hover, .copy-button:hover {
+    background: linear-gradient(135deg, #3949ab, #5c6bc0);
+    transform: translateY(-2px);
+}
+
+/* Scramble Görüntüleme */
+.scramble-display {
+    font-size: 20px;
+    margin: 20px 0;
+    text-align: center;
+    word-wrap: break-word;
+    color: #ffffff;
+}
+
+/* Alt Kısım (Timer) */
+.bottom {
+    flex: 1;
+    background: linear-gradient(135deg, #121629, #1c1c3a);
+    width: 100%;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bottom:active {
+    transform: scale(0.97);
+}
+
+/* Timer Yuvarlak Kapsayıcı */
+.timer-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: #1e1e3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+    transition: all 0.2s;
+}
+
+/* Timer çalışınca dalgalanma efekti */
+.timer-circle.running {
+    animation: pulse 1s infinite;
+    box-shadow: 0 0 25px rgba(255,255,255,0.5);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 15px rgba(255,255,255,0.2);}
+    50% { transform: scale(1.08); box-shadow: 0 0 30px rgba(255,255,255,0.5);}
+    100% { transform: scale(1); box-shadow: 0 0 15px rgba(255,255,255,0.2);}
+}
+</style>
+</head>
+<body>
+<div class="split">
+    <!-- Üst Kısım -->
+    <div class="top">
+        <div class="cube-selector-area">
+            <select id="cube-select" class="cube-select">
+                <option value="2x2">2x2</option>
+                <option value="3x3" selected>3x3</option>
+                <option value="4x4">4x4</option>
+                <option value="5x5">5x5</option>
+                <option value="pyraminx">Pyraminx</option>
+                <option value="skewb">Skewb</option>
+            </select>
+        </div>
+        <div class="scramble-area">
+            <div class="title">Rubik's Cube Scramble Creator</div>
+            <button id="create-button" class="create-button">Oluştur</button>
+            <div id="scramble-display" class="scramble-display"></div>
+            <button id="copy-button" class="copy-button" style="display: none;">Kopyala!</button>
+        </div>
+    </div>
+
+    <!-- Alt Kısım -->
+    <div class="bottom" id="bottom-timer">
+        <div class="timer-circle" id="timer">00:00.00</div>
+    </div>
+</div>
+
+<script>
+// Scramble Script
+document.getElementById("create-button").addEventListener("click", function() {
+    const selectElement = document.getElementById("cube-select");
+    const selectedCube = selectElement.value;
+    let scramble = [];
+
+    if (selectedCube === "3x3") {
+        const moves = ["R","L","U","D","F","B","R'","L'","U'","D'","F'","B'","R2","L2","U2","D2","F2","B2"];
+        scramble = generateScramble(moves, Math.floor(Math.random()*3)+20);
+    } else if(selectedCube==="2x2"){
+        scramble = generateScramble(["R","R'","R2","U","U'","U2","F","F'","F2"], Math.floor(Math.random()*2)+11);
+    } else if(selectedCube==="4x4"){
+        scramble = generateScramble(["R","R'","R2","Rw","L","L'","L2","Lw","U","U'","U2","Uw","D","D'","D2","Dw","F","F'","F2","Fw","B","B'","B2","Bw"], Math.floor(Math.random()*4)+42);
+    } else if(selectedCube==="5x5"){
+        scramble = generateScramble(["R","R'","R2","Rw","L","L'","L2","Lw","U","U'","U2","Uw","D","D'","D2","Dw","F","F'","F2","Fw","B","B'","B2","Bw"], Math.floor(Math.random()*4)+60);
+    } else if(selectedCube==="pyraminx"){
+        scramble = generatePyraminxScramble(["R","R'","L","L'","U","U'","B","B'"], Math.floor(Math.random()*3)+6);
+    } else if(selectedCube==="skewb"){
+        scramble = generateSkewbScramble(["R","L","U","B","R'","L'","U'","B'"], Math.floor(Math.random()*3)+6);
+    }
+
+    if(scramble.length>0){
+        document.getElementById("scramble-display").textContent = scramble.join(" ");
+        document.getElementById("copy-button").style.display = "flex";
+    } else {
+        document.getElementById("scramble-display").textContent = "";
+        document.getElementById("copy-button").style.display = "none";
+    }
+});
+
+function generateScramble(moves,length){
+    let scramble=[], lastMove="";
+    for(let i=0;i<length;i++){
+        let move;
+        do{ move = moves[Math.floor(Math.random()*moves.length)]; }
+        while(move[0]===lastMove[0]);
+        scramble.push(move);
+        lastMove=move;
+    }
+    return scramble;
+}
+
+function generatePyraminxScramble(moves,length){
+    let scramble=[], lastMove="";
+    for(let i=0;i<length;i++){
+        let move;
+        do{ move = moves[Math.floor(Math.random()*moves.length)]; }
+        while(scramble.length>0 && move[0]===lastMove[0]);
+        scramble.push(move);
+        lastMove=move;
+    }
+    const smallMoves=["u","u'","l","l'","r","r'","b","b'"];
+    for(let i=0;i<Math.floor(Math.random()*4)+1;i++){
+        let move;
+        do{ move = smallMoves[Math.floor(Math.random()*smallMoves.length)]; }
+        while(scramble.includes(move));
+        scramble.push(move);
+    }
+    return scramble;
+}
+
+function generateSkewbScramble(moves,length){
+    let scramble=[], lastMove="";
+    for(let i=0;i<length;i++){
+        let move;
+        do{ move = moves[Math.floor(Math.random()*moves.length)]; }
+        while(scramble.length>0 && move[0]===lastMove[0]);
+        scramble.push(move);
+        lastMove=move;
+    }
+    return scramble;
+}
+
+document.getElementById("copy-button").addEventListener("click", function(){
+    const scrambleText = document.getElementById("scramble-display").textContent;
+    navigator.clipboard.writeText(scrambleText).then(()=>{ alert("Scramble kopyalandı: "+scrambleText); });
+});
+
+// Timer Script
+let startTime, updatedTime, difference, tInterval;
+let running=false, clickCount=0;
+
+const bottomTimer = document.getElementById('bottom-timer');
+const timerDisplay = document.getElementById('timer');
+
+function startTimer() {
+    const circle = document.getElementById('timer');
+    if(!running){
+        startTime=new Date().getTime();
+        tInterval=setInterval(updateTime,10);
+        running=true;
+        circle.classList.add('running');
+    } else {
+        clearInterval(tInterval);
+        running=false;
+        circle.classList.remove('running');
+    }
+}
+
+function updateTime(){
+    updatedTime=new Date().getTime();
+    difference=updatedTime-startTime;
+    const minutes=Math.floor((difference % (1000*60*60))/(1000*60));
+    const seconds=Math.floor((difference % (1000*60))/1000);
+    const milliseconds=Math.floor((difference %1000)/10);
+    timerDisplay.innerHTML=`${pad(minutes)}:${pad(seconds)}.${pad(milliseconds)}`;
+}
+
+function pad(n){ return n<10?"0"+n:n; }
+
+bottomTimer.addEventListener('click', function(){
+    clickCount++;
+    if(clickCount===3){
+        clearInterval(tInterval);
+        running=false;
+        timerDisplay.innerHTML="00:00.00";
+        document.getElementById('timer').classList.remove('running');
+        clickCount=0;
+    } else {
+        startTimer();
+    }
+});
+</script>
+</body>
+</html>
