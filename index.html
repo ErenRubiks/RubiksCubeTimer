@@ -161,15 +161,12 @@ body, html {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #ffffff;
-    color: #ff0000;
-    font-size: 24px;
+    color: #ffffff; /* Beyaz yazı */
+    font-size: 20px;
     font-weight: bold;
-    padding: 30px 40px;
-    border-radius: 20px;
     text-align: center;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     z-index: 9999;
+    background: transparent; /* Arka plan yok */
 }
 </style>
 </head>
@@ -205,11 +202,20 @@ body, html {
 // İnternet Kontrolü
 function checkConnection() {
     if (!navigator.onLine) {
-        document.body.innerHTML = "<div id='no-internet'>İnternet bağlantısı yok!</div>";
+        if(!document.getElementById('no-internet')){
+            const div = document.createElement('div');
+            div.id = 'no-internet';
+            div.textContent = 'İnternet bağlantısı yok!';
+            document.body.appendChild(div);
+        }
+    } else {
+        const div = document.getElementById('no-internet');
+        if(div) div.remove();
     }
 }
 checkConnection();
 window.addEventListener('offline', checkConnection);
+window.addEventListener('online', checkConnection);
 
 // Scramble Script
 document.getElementById("create-button").addEventListener("click", function() {
