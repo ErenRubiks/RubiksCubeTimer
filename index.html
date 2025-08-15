@@ -13,6 +13,7 @@ body, html {
     font-family: 'Arial', sans-serif;
     background: #121229;
     color: #fff;
+    overflow: hidden; /* Kaydırmayı engelle */
 }
 
 /* Split Container */
@@ -153,6 +154,23 @@ body, html {
     50% { transform: scale(1.08); box-shadow: 0 0 30px rgba(255,255,255,0.5);}
     100% { transform: scale(1); box-shadow: 0 0 15px rgba(255,255,255,0.2);}
 }
+
+/* İnternet yok uyarısı */
+#no-internet {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    color: #ff0000;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 30px 40px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    z-index: 9999;
+}
 </style>
 </head>
 <body>
@@ -187,8 +205,7 @@ body, html {
 // İnternet Kontrolü
 function checkConnection() {
     if (!navigator.onLine) {
-        alert("İnternet bağlantısı yok! Uygulama kapanacak.");
-        document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50%;'>İnternet bağlantısı yok!</h2>";
+        document.body.innerHTML = "<div id='no-internet'>İnternet bağlantısı yok!</div>";
     }
 }
 checkConnection();
